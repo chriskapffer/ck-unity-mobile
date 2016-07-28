@@ -1,0 +1,3 @@
+[submodule "Dependencies/ck-unity-utilities"]
+	path = Dependencies/ck-unity-utilities
+	url = https://github.com/chriskapffer/ck-unity-utilities
