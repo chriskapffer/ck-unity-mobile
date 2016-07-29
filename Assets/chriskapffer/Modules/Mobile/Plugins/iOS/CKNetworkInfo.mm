@@ -75,6 +75,8 @@ extern "C"
                                           [NSNumber numberWithInt:14], CTRadioAccessTechnologyLTE,
                                           nil];
             [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(accessTechnologyDidChange) name:CTRadioAccessTechnologyDidChangeNotification object:nil];
+            // pretend that a change occured to set the correct value after initialization
+            [self accessTechnologyDidChange];
         }
 #endif
     }
@@ -88,7 +90,13 @@ extern "C"
 
 - (void)accessTechnologyDidChange
 {
-    self.accessTechnologyChangedCallback([self getCurrentAccessTechnology]);
+    // we are not on the main thread here, because this is a listener to CTRadioAccessTechnologyDidChangeNotification
+    dispatch_async(dispatch_get_main_queue(), ^{
+        // now we can do stuff without breaking things in unity
+        if (self.accessTechnologyChangedCallback != NULL) {
+            self.accessTechnologyChangedCallback([self getCurrentAccessTechnology]);
+        }
+    });
 }
 
 - (int)getCurrentAccessTechnology

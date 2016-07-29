@@ -831,16 +831,6 @@ MonoBehaviour:
   - B3
   - B4
   - B5
-  - B5
-  - B5
-  - B5
-  - B5
-  - B5
-  - B5
-  - B5
-  - B5
-  - B5
-  - B5
   onButtonPressed:
     m_PersistentCalls:
       m_Calls:

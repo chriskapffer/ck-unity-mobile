@@ -9,8 +9,18 @@ namespace ChrisKapffer.Mobile {
 
 	public delegate void NetworkTypeChangedEventHandler(NetworkInfo.NetworkType currentType);
 
+    /// <summary>
+    /// This class allows you to determine the type of the carrier network the phone is currently connected to.
+    /// Unity only knows if it is connected via wifi or carrier network or if it has no connection at all.
+    /// But since there are huge differences of download speed it does make a difference if you have a LTE or Edge
+    /// connection. Knowing which one it is helps you for example to determine wether a video-ad should be shown or not.
+    /// 
+    /// </summary>
 	public class NetworkInfo {
 	
+        /// <summary>
+        /// Different types of networks. Don't change the indices or you will break the mapping of the corresponding iOS and Android network types!
+        /// </summary>
 		public enum NetworkType {
 			unknown   = -1,
 			xRTT      =  0,
@@ -32,8 +42,23 @@ namespace ChrisKapffer.Mobile {
 
 		#region Public Interface
 
-		public static event NetworkTypeChangedEventHandler OnNetworkTypeChanged;
+        /// <summary>
+        /// Occurs when the network type has changed. Notice that we specifically use the
+        /// instance accessor here in order to initialize it <see cref="NetworkInfo.Init"/>
+        /// </summary>
+        public static event NetworkTypeChangedEventHandler OnNetworkTypeChanged {
+            add {
+                Instance.onNetworkTypeChangedPrivate += value;
+            }
+            remove {
+                Instance.onNetworkTypeChangedPrivate -= value;             
+            }
+        }
 
+        /// <summary>
+        /// Enable caching if you query the current network type in a high frequency but want to avoid too many native code requests.
+        /// </summary>
+        /// <value><c>true</c> if caching should be enabled; otherwise, <c>false</c>.</value>
 		public static bool CachingEnabled {
 			get {
 				return Instance.cachingEnabled;
@@ -43,10 +68,19 @@ namespace ChrisKapffer.Mobile {
 			}
 		}
 
+        /// <summary>
+        /// Gets the type of the current network.
+        /// </summary>
+        /// <returns>The current network type.</returns>
+        /// <param name="ignoreCaching">If set to <c>true</c> native code will be executed to determine the type, otherwise the previously cached value is used.</param>
 		public static NetworkType GetCurrentNetworkType(bool ignoreCaching = false) {
 			return Instance.GetCurrentNetworkTypeImpl(ignoreCaching);
 		}
 
+        /// <summary>
+        /// Determines whether the current network type provides a fast enough connection. E.g. for streaming videos
+        /// </summary>
+        /// <returns><c>true</c> if connected via wifi or to a network type better than edge, <c>false</c> otherwise.</returns>
 		public static bool IsCurrentNetworkTypeFast() {
 			return Instance.IsCurrentNetworkTypeFastImpl();
 		}
@@ -57,6 +91,7 @@ namespace ChrisKapffer.Mobile {
 
 		private static object _instanceAccessor = new object();
 #if !NETFX_CORE
+        // hide _instance from IntelliSense
 		[Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
 #endif
 		private static NetworkInfo _instance;
@@ -92,32 +127,64 @@ namespace ChrisKapffer.Mobile {
 		private NetworkType currentType = NetworkType.unknown;
 		private delegate void NetworkTypeChangedDelegate(int technologyIdx);
 
+        /// <summary>
+        /// Occurs when the network type has changed.
+        /// </summary>
+        private event NetworkTypeChangedEventHandler onNetworkTypeChangedPrivate;
+
+        /// <summary>
+        /// Handles the network type changed event.
+        /// This is a callback method which gets passed on to native code to be accesible from there.
+        /// </summary>
+        /// <param name="index">Index of the new network, the client just got connected with.</param>
 		[MonoPInvokeCallback(typeof(NetworkTypeChangedDelegate))]
 		private static void _NetworkTypeChanged(int index) {
-			Instance.currentType = (NetworkType)index;
-			//Singleton.Get<ScreenLog>().Print("NETWORK change", Instance.currentType.ToString());
-			if (OnNetworkTypeChanged != null) {
-				OnNetworkTypeChanged(Instance.currentType);
-			}
+            Instance.NetworkTypeChangedImpl(index);
 		}
 
+        /// <summary>
+        /// The implementation of the corresponding callback. <see cref="_NetworkTypeChanged"/>
+        /// </summary>
+        /// <param name="index">Index of the new network, the client just got connected with.</param>
+        private void NetworkTypeChangedImpl(int index) {
+            currentType = (NetworkType)index;
+            if (onNetworkTypeChangedPrivate != null) {
+                onNetworkTypeChangedPrivate(currentType);
+            }
+        }
+
+        /// <summary>
+        /// This enables native plugins to do some initialization before querying the network status
+        /// </summary>
 		private void Init() {
 			#if !UNITY_EDITOR
 			_RegisterNetworkTypeChangedCallback(_NetworkTypeChanged);
 			#endif
+            // create our private Monobehaviour instance, to be able to react to application pause and quit
 			Singleton.Get<NetworkInfoBehaviour>();
 		}
 		
+        /// <summary>
+        /// This enables native plugins to do some clean up when the app quits.
+        /// </summary>
 		private void Deinit() {
 			#if !UNITY_EDITOR
 			_CleanupResources();
 			#endif
 		}
 
+        /// <summary>
+        /// Forces an update of <see cref="currentType"/> to the current value.
+        /// </summary>
 		private void Refresh() {
 			GetCurrentNetworkTypeImpl(true);
 		}
 
+        /// <summary>
+        /// Gets the current network type.
+        /// </summary>
+        /// <returns>The current network type.</returns>
+        /// <param name="ignoreCaching">If set to <c>true</c> native code will be executed to determine the type, otherwise the previously cached value is used.</param>
 		private NetworkType GetCurrentNetworkTypeImpl(bool ignoreCaching = false) {
 			#if UNITY_EDITOR
 			if (Application.isEditor) {
@@ -126,12 +193,15 @@ namespace ChrisKapffer.Mobile {
 			#endif
 			if (!cachingEnabled || ignoreCaching || currentType == NetworkType.unknown) {
 				currentType = (NetworkType)_GetCurrentNetworkType();
-				//Singleton.Get<ScreenLog>().Print("NETWORK", currentType.ToString());
 			}
 
 			return currentType;
 		}
 
+        /// <summary>
+        /// Determines whether the current network type provides a fast enough connection. E.g. for streaming videos
+        /// </summary>
+        /// <returns><c>true</c> if connected via wifi or to a network type better than edge, <c>false</c> otherwise.</returns>
 		private bool IsCurrentNetworkTypeFastImpl() {
 			if (Application.internetReachability == NetworkReachability.ReachableViaLocalAreaNetwork) {
 				return true;
@@ -147,6 +217,9 @@ namespace ChrisKapffer.Mobile {
 
 		#region Unity Hooks
 
+        /// <summary>
+        /// A private MonoBehaviour to be able to react to quit and pause events.
+        /// </summary>
 		private class NetworkInfoBehaviour : MonoBehaviour {
 			void OnApplicationPause(bool pause) {
 				if (!pause) {

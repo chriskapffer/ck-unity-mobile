@@ -3,17 +3,30 @@ using UnityEngine.Events;
 using System.Collections;
 
 [System.Serializable]
-public class UnityEventBool : UnityEvent<bool> {
-
-}
+public class InternetAccessChangedEvent : UnityEvent<bool> { }
 
 public class InternetAccess : MonoBehaviour {
 
-	public float interval = 0.2f;
-	public UnityEventBool onAccessChanged;
-	private bool hasAccess = true;
+    public InternetAccessChangedEvent onAccessChanged;
+
+    /// <summary>
+    /// Frequency of how often to check if connection is still there
+    /// </summary>
+    public float interval = 1f;
+
+	private bool _hasAccess = true;
 	public bool HasAccess {
-		get { return hasAccess; }
+		get {
+            return _hasAccess;
+        }
+        private set {
+            if (_hasAccess != value) {
+                _hasAccess = value;
+                if (onAccessChanged != null) {
+                    onAccessChanged.Invoke(_hasAccess);
+                }
+            }
+        }
 	}
 
 	// Use this for initialization
@@ -24,13 +37,7 @@ public class InternetAccess : MonoBehaviour {
 	private IEnumerator CheckAcces() {
 		while (true) {
 			yield return new WaitForSeconds(interval);
-			bool isReachable = Application.internetReachability != NetworkReachability.NotReachable;
-			if (hasAccess != isReachable) {
-				hasAccess = isReachable;
-				if (onAccessChanged != null) {
-					onAccessChanged.Invoke(hasAccess);
-				}
-			}
+            HasAccess = Application.internetReachability != NetworkReachability.NotReachable;
 		}
 	}
 }

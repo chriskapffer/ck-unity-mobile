@@ -16,13 +16,12 @@ namespace ChrisKapffer.Mobile {
 		#region Public Interface
 
         /// <summary>
-        // TODO: allowed button count Android ?
-        /// Shows a popup message with an action delegate and one to three buttons.
+        /// Shows a popup message with an action delegate and one to three buttons. Android limits the number of buttons to three. In iOS you can have as many buttons as you want.
         /// </summary>
         /// <param name="title">The title or headline of the popup.</param>
         /// <param name="message">Text content of the popup.</param>
         /// <param name="onClose">Action delegate with the index of the pressed button. If the popup was closed without any button being pressed, the index will be -1.</param>
-        /// <param name="buttons">One to three strings, used as button titles.</param>
+        /// <param name="buttons">An array of strings (or a single string) as button titles. There can only be three buttons on Android.</param>
 		public static void Show(string title, string message, Action<int> onClose, params string[] buttons) {
 			Instance.ShowImpl(title, message, onClose, buttons);
 		}
@@ -66,15 +65,20 @@ namespace ChrisKapffer.Mobile {
 		private delegate void PopupClosedDelegate(int buttonClicked);
 		
         /// <summary>
+        /// Handles closing of the popup.
         /// This is a callback method which gets passed on to native code to be accesible from there.
         /// </summary>
         /// <param name="index">Index of the button pressed by the user.</param>
 		[MonoPInvokeCallback(typeof(PopupClosedDelegate))]
 		private static void _PopupClosed(int index) {
-			Instance.PopupClosed(index);
+            Instance.PopupClosedImpl(index);
 		}
 
-		private void PopupClosed(int index) {
+        /// <summary>
+        /// The implementation of the corresponding callback. <see cref="_PopupClosed"/>
+        /// </summary>
+        /// <param name="index">Index of the button pressed by the user.</param>
+		private void PopupClosedImpl(int index) {
 			isShowing = false;
             // invoke action delegate if set
 			if (onCloseAction != null) {
@@ -83,13 +87,12 @@ namespace ChrisKapffer.Mobile {
 		}
 
         /// <summary>
-        // TODO: allowed button count Android ?
-        /// Shows a popup message with an action delegate and one to three buttons.
+        /// Shows a popup message with an action delegate and one to three buttons. Android limits the number of buttons to three. In iOS you can have as many buttons as you want.
         /// </summary>
         /// <param name="title">The title or headline of the popup.</param>
         /// <param name="message">Text content of the popup.</param>
         /// <param name="onClose">Action delegate with the index of the pressed button. If the popup was closed without any button being pressed, the index will be -1.</param>
-        /// <param name="buttons">One to three strings, used as button titles.</param>
+        /// <param name="buttons">An array of strings (or a single string) as button titles. There can only be three buttons on Android.</param>
 		private void ShowImpl(string title, string message, Action<int> onClose, params string[] buttons) {
 			if (isShowing) {
                 // do nothing if it is already visible
@@ -97,6 +100,12 @@ namespace ChrisKapffer.Mobile {
 			}
 			isShowing = true;
 			onCloseAction = onClose;
+            #if UNITY_ANDROID
+            if (buttons.Length > 3) {
+                Array.Resize(ref buttons, 3);
+                Debug.LogWarning("An alert dialog can not have more than three buttons.");
+            }
+            #endif
             // call external method implemented in native code (Objective-C or Java)
 			_ShowPopup(title, message, buttons, buttons.Length, _PopupClosed);
 		}

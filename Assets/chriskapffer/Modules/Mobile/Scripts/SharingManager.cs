@@ -65,17 +65,23 @@ namespace ChrisKapffer.Mobile {
     	private Action<string, bool> onFinishedAction;
     	private delegate void FinishedSharingDelegate(string destination, bool completed);
     	
-    	[MonoPInvokeCallback(typeof(FinishedSharingDelegate))]
-    	private static void _FinishedSharing(string destination, bool completed) {
-    		Instance.FinishedSharing(destination, completed);
-    	}
-    	
         /// <summary>
+        /// Handles the result after the sharing process has finished.
         /// This is a callback method which gets passed on to native code to be accesible from there.
         /// </summary>
         /// <param name="destination">Name of the app or service the content was shared with.</param>
         /// <param name="completed">Wether or net the operation was successfull.</param>
-    	private void FinishedSharing(string destination, bool completed) {
+    	[MonoPInvokeCallback(typeof(FinishedSharingDelegate))]
+    	private static void _FinishedSharing(string destination, bool completed) {
+            Instance.FinishedSharingImpl(destination, completed);
+    	}
+    	
+        /// <summary>
+        /// The implementation of the corresponding callback. <see cref="_FinishedSharing"/>
+        /// </summary>
+        /// <param name="destination">Name of the app or service the content was shared with.</param>
+        /// <param name="completed">Wether or net the operation was successfull.</param>
+    	private void FinishedSharingImpl(string destination, bool completed) {
     		isShowing = false;
     		if (onFinishedAction != null) {
     			onFinishedAction(destination, completed);
