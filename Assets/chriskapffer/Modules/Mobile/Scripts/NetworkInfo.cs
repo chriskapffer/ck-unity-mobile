@@ -49,6 +49,8 @@ namespace ChrisKapffer.Mobile {
         public static event NetworkTypeChangedEventHandler OnNetworkTypeChanged {
             add {
                 Instance.onNetworkTypeChangedPrivate += value;
+                // to trigger a potential change
+                Instance.Refresh();
             }
             remove {
                 Instance.onNetworkTypeChangedPrivate -= value;             
@@ -139,7 +141,11 @@ namespace ChrisKapffer.Mobile {
         /// <param name="index">Index of the new network, the client just got connected with.</param>
 		[MonoPInvokeCallback(typeof(NetworkTypeChangedDelegate))]
 		private static void _NetworkTypeChanged(int index) {
-            Instance.NetworkTypeChangedImpl(index);
+            // Unfortunately we can not ensure that we are on the main thread at this point. While our iOS plugin
+            // doess call this from the main thread our Android plugin does not.
+            ThreadHelper.DispatchOnMain(() => {
+                Instance.NetworkTypeChangedImpl(index);
+            });
 		}
 
         /// <summary>
@@ -157,6 +163,9 @@ namespace ChrisKapffer.Mobile {
         /// This enables native plugins to do some initialization before querying the network status
         /// </summary>
 		private void Init() {
+            // because the _NetworkTypeChanged callback could originate from outside of the main thread, we need to initialize the ThreadHelper here
+            // to be able to jump back to the main thread when executing the callback code
+            ThreadHelper.Init();
 			#if !UNITY_EDITOR
 			_RegisterNetworkTypeChangedCallback(_NetworkTypeChanged);
 			#endif

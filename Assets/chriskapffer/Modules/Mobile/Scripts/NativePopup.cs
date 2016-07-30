@@ -68,22 +68,26 @@ namespace ChrisKapffer.Mobile {
         /// Handles closing of the popup.
         /// This is a callback method which gets passed on to native code to be accesible from there.
         /// </summary>
-        /// <param name="index">Index of the button pressed by the user.</param>
+        /// <param name="index">Index of the button pressed by the user. -1 if the popup was dismissed</param>
 		[MonoPInvokeCallback(typeof(PopupClosedDelegate))]
 		private static void _PopupClosed(int index) {
-            Instance.PopupClosedImpl(index);
+            // Unfortunately we can not ensure that we are on the main thread at this point. While our iOS plugin
+            // doess call this from the main thread our Android plugin does not.
+            ThreadHelper.DispatchOnMain(() => {
+                Instance.PopupClosedImpl(index);
+            });
 		}
 
         /// <summary>
         /// The implementation of the corresponding callback. <see cref="_PopupClosed"/>
         /// </summary>
-        /// <param name="index">Index of the button pressed by the user.</param>
+        /// <param name="index">Index of the button pressed by the user. -1 if the popup was dismissed</param>
 		private void PopupClosedImpl(int index) {
-			isShowing = false;
+            isShowing = false;
             // invoke action delegate if set
-			if (onCloseAction != null) {
-				onCloseAction(index);
-			}
+            if (onCloseAction != null) {
+                onCloseAction(index);
+            }
 		}
 
         /// <summary>
@@ -106,6 +110,11 @@ namespace ChrisKapffer.Mobile {
                 Debug.LogWarning("An alert dialog can not have more than three buttons.");
             }
             #endif
+
+            // because the _PopupClosed callback could originate from outside of the main thread, we need to initialize the ThreadHelper here
+            // to be able to jump back to the main thread when executing the callback code
+            ThreadHelper.Init();
+
             // call external method implemented in native code (Objective-C or Java)
 			_ShowPopup(title, message, buttons, buttons.Length, _PopupClosed);
 		}
