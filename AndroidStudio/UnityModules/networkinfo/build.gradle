@@ -1,0 +1,59 @@
+apply plugin: 'com.android.model.library'
+
+model {
+    android {
+        compileSdkVersion 24
+        buildToolsVersion "24.0.1"
+
+        defaultConfig {
+            minSdkVersion.apiLevel 15
+            targetSdkVersion.apiLevel 24
+            versionCode 1
+            versionName "1.0"
+        }
+        buildTypes {
+            release {
+                minifyEnabled false
+                proguardFiles.add(file("proguard-rules.pro"))
+            }
+        }
+        ndk {
+            moduleName project.name
+            ldLibs.addAll(["log"])
+        }
+    }
+    android.lintOptions {
+        abortOnError true
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:appcompat-v7:24.1.1'
+}
+
+task copyLibs(type: Copy) {
+    from('build/intermediates/bundles/release/jni')
+    into(exportPath + '/lib')
+    include('armeabi-v7a/lib' + project.name + '.so')
+    include('x86/lib' + project.name + '.so')
+}
+
+task copyJar(type: Copy) {
+    from('build/intermediates/bundles/release/')
+    into(exportPath + '/' + project.name)
+    include('classes.jar')
+    rename('classes.jar', project.name + '.jar')
+}
+
+task releaseBuild {
+
+}
+
+releaseBuild.dependsOn build
+releaseBuild.dependsOn copyJar
+releaseBuild.dependsOn copyLibs
+
+assemble.finalizedBy releaseBuild
+
+// go to terminal and type: ./gradlew releaseBuild

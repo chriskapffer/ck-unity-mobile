@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="shared_images" path="ck_shared_images/" />
+</paths>
+
+<!-- you have to include the following snipped inside your AndroidManifest.xml
+
+	<provider
+	    android:name="android.support.v4.content.FileProvider"
+	    android:authorities="${applicationId}.sharing.fileprovider"
+	    android:grantUriPermissions="true"
+	    android:exported="false">
+	    <meta-data
+	        android:name="android.support.FILE_PROVIDER_PATHS"
+	        android:resource="@xml/sharingmanager_paths" />
+	</provider>
+	
+-->

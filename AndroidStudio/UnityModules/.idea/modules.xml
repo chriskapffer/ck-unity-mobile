@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/UnityModules.iml" filepath="$PROJECT_DIR$/UnityModules.iml" />
+      <module fileurl="file://$PROJECT_DIR$/nativepopup/nativepopup.iml" filepath="$PROJECT_DIR$/nativepopup/nativepopup.iml" />
+      <module fileurl="file://$PROJECT_DIR$/networkinfo/networkinfo.iml" filepath="$PROJECT_DIR$/networkinfo/networkinfo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/sharingmanager/sharingmanager.iml" filepath="$PROJECT_DIR$/sharingmanager/sharingmanager.iml" />
+    </modules>
+  </component>
+</project>
