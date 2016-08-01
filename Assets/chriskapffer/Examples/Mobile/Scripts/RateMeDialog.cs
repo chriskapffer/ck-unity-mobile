@@ -5,7 +5,7 @@ using UnityEngine;
 using ChrisKapffer.Mobile;
 
 /// <summary>
-/// Behaviour to atomatically show a popup to ask the user if he/she likes to rate this app.
+/// Behaviour to atomatically show a popup to ask the user if he/she would like to rate this app.
 /// You can specifiy the time interval when to show this message again if user prosponed the question.
 /// </summary>
 public class RateMeDialog : MonoBehaviour {

@@ -1,2 +1,10 @@
 # ck-unity-mobile
 Some usefull mobile plugins (for iOS and Android)
+
+This is a small collections of mobile plugins for Unity. Each one uses native code (source included) and works on iOS and Android.
+
+Currently, the collection consists of following plugins:
+
+* [NativePopup](https://github.com/chriskapffer/ck-unity-mobile/blob/master/Assets/chriskapffer/Modules/Mobile/Scripts/NativePopup.cs) - Enables you to display an alert dialog. This dialog uses the native system UI. You can use it for notifications or to ask the user to rate your app. There is a [RateMe-Dialog](https://github.com/chriskapffer/ck-unity-mobile/blob/master/Assets/chriskapffer/Examples/Mobile/Scripts/RateMeDialog.cs) included in the examples, whose content is translated into ten popular languages.
+* [NetworkInfo](https://github.com/chriskapffer/ck-unity-mobile/blob/master/Assets/chriskapffer/Modules/Mobile/Scripts/NetworkInfo.cs) - Determines the type of carrier network. This can be quite important, because depending on which type of network the user is connected to (Edge, 3G, or LTE) the app has to deal with different download speeds. A typical use case in which you'd want to know the carrier is when you use video advertisements. While some vendors handle a low download rate quite well others don't. If the app knows that the current network is Edge or below, it can prevent video ads from showing.
+* [SharingManager](https://github.com/chriskapffer/ck-unity-mobile/blob/master/Assets/chriskapffer/Modules/Mobile/Scripts/SharingManager.cs) - Allows your users to share a string and an image via the sharing mechanisms of their platform. The [Sharing Example](https://github.com/chriskapffer/ck-unity-mobile/blob/master/Assets/chriskapffer/Examples/Mobile/Scripts/SharingExample.cs) takes a screenshot of the game and composes a message with the current score and a link to a website.
